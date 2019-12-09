@@ -1,0 +1,75 @@
+/*----------------------------------------------------------------------------*/
+/*                                                                            */
+/*    Module:       main.cpp                                                  */
+/*    Author:       C:\Users\gomezs                                           */
+/*    Created:      Thu Nov 21 2019                                           */
+/*    Description:  V5 project                                                */
+/*                                                                            */
+/*----------------------------------------------------------------------------*/
+
+// ---- START VEXCODE CONFIGURED DEVICES ----
+// ---- END VEXCODE CONFIGURED DEVICES ----
+
+#include "vex.h"
+#include "robot-config.h" 
+using namespace vex;
+vex::brain brain;
+vex::motor LeftMotor = vex::motor(vex::PORT12, vex::gearSetting::ratio18_1, false);
+vex::motor RightMotor = vex::motor(vex::PORT20, vex::gearSetting::ratio18_1, true);
+vex::motor Intake1 = vex::motor(vex::PORT2, vex::gearSetting::ratio18_1, false);
+vex::motor Intake2 = vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, true);
+vex::motor Lift = vex::motor(vex::PORT11, vex::gearSetting::ratio18_1, true);
+vex::motor Tower1 = vex::motor(vex::PORT1, vex::gearSetting::ratio18_1, true);
+vex::motor Tower2 = vex::motor(vex::PORT10, vex::gearSetting::ratio18_1, true);
+//vex::limit fullTower = limit(Brain.ThreeWirePort.A); 
+//vex::limit towerUp = limit(Brain.ThreeWirePort.B);
+vex::controller Controller1 = vex::controller();
+
+
+int main() {        
+    //Intake1.spin(directionType::fwd, 75, velocityUnits::pct);
+    //Intake2.spin(directionType::fwd, 75, velocityUnits::pct);
+    bool intake = false;
+    Controller1.ButtonB.pressed([] {
+ if(Intake1.isSpinning())
+            {
+                Intake1.stop();
+                Intake2.stop();
+            }
+            else
+            {
+                Intake1.spin(directionType::fwd, 75, velocityUnits::pct);
+                Intake2.spin(directionType::fwd, 75, velocityUnits::pct);
+            }
+    });
+    while (true) {          
+        LeftMotor.spin(directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())/1, velocityUnits::pct); 
+        RightMotor.spin(directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())/1, velocityUnits::pct);
+
+        while(Controller1.ButtonY.pressing())
+        {
+          Tower1.spin(directionType::fwd, 100, velocityUnits::pct);
+          Tower2.spin(directionType::rev, 100, velocityUnits::pct);
+        }
+        while(Controller1.ButtonX.pressing())
+        {
+          Tower1.spin(directionType::rev, 100, velocityUnits::pct);
+          Tower2.spin(directionType::fwd, 100, velocityUnits::pct);
+        }
+        while(Controller1.ButtonUp.pressing())
+        {
+          Lift.spin(directionType::fwd, Controller1.Axis2.value(), velocityUnits::pct);
+        }
+        
+        if(Controller1.ButtonB.pressing())
+        {
+           
+            task::sleep(100);
+        }
+        
+      Tower1.stop();
+      Tower2.stop();
+      Lift.stop();
+      task::sleep(10); 
+    } 
+  }

@@ -1,0 +1,70 @@
+/*----------------------------------------------------------------------------*/
+/*                                                                            */
+/*    Module:       main.cpp                                                  */
+/*    Author:       C:\Users\gomezs                                           */
+/*    Created:      Thu Nov 21 2019                                           */
+/*    Description:  V5 project                                                */
+/*                                                                            */
+/*----------------------------------------------------------------------------*/
+
+// ---- START VEXCODE CONFIGURED DEVICES ----
+// ---- END VEXCODE CONFIGURED DEVICES ----
+
+#include "vex.h"
+#include "robot-config.h" 
+using namespace vex;
+vex::brain brain;
+vex::motor LeftMotor = vex::motor(vex::PORT12, vex::gearSetting::ratio18_1, false);
+vex::motor RightMotor = vex::motor(vex::PORT20, vex::gearSetting::ratio18_1, true);
+vex::motor Intake1 = vex::motor(vex::PORT2, vex::gearSetting::ratio18_1, false);
+vex::motor Intake2 = vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, true);
+vex::motor Lift = vex::motor(vex::PORT11, vex::gearSetting::ratio18_1, true);
+vex::motor Tower1 = vex::motor(vex::PORT1, vex::gearSetting::ratio18_1, true);
+vex::motor Tower2 = vex::motor(vex::PORT10, vex::gearSetting::ratio18_1, true);
+//vex::limit fullTower = limit(Brain.ThreeWirePort.A); 
+//vex::limit towerUp = limit(Brain.ThreeWirePort.B);
+vex::controller Controller1 = vex::controller();
+
+int main() {        
+    Intake1.spin(directionType::fwd, 75, velocityUnits::pct);
+    Intake2.spin(directionType::fwd, 75, velocityUnits::pct);
+
+    while (true) {          
+        LeftMotor.spin(directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())/1, velocityUnits::pct); //(Axis3+Axis4)/2;
+        RightMotor.spin(directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())/1, velocityUnits::pct);//(Axis3-Axis4)/2;
+        
+        // robot is done
+        if(fullTower.pressing())
+        {
+            if(Intake1.isSpinning())
+            {
+                Intake1.stop();
+                Intake2.stop();
+            }
+        }
+        // robot running
+        else {
+
+            if(Controller1.ButtonA.pressed())
+            {
+                if(Intake1.isSpinning())
+                {
+                    Intake1.stop();
+                    Intake2.stop();
+                }
+                else
+                {
+                    Intake1.spin(directionType::fwd, 75, velocityUnits::pct);
+                    Intake2.spin(directionType::fwd, 75, velocityUnits::pct);
+                }
+            }
+            if(Controller1.ButtonB.pressed())
+            {
+                Lift.startRotateTo(towerUp.pressing() ? -720 : 720, rotationUnits::deg, 50, velocityUnits::pct);   
+            }
+        }
+        
+
+       task::sleep(10); 
+    } 
+  }

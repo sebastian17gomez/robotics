@@ -1,0 +1,32 @@
+double CalculatePID(double SetPoint);
+class PIDControl
+{
+  private:
+    double kP;
+    double kI;
+    double kD;
+    double sample;
+    double previousError;
+    double processVariable;
+  public:
+    double setPoint;
+};
+#include "RobotMethods.h"
+#include "PIDControl.h"
+double CalculatePID(double setPoint, double processVariable)
+{
+  kP = 1;
+  kI = 1;
+  kD = 1;
+  sample = 10;
+  double error = setPoint - processVariable;
+  previousError = error;
+
+  double P = kP*error;
+  double I = kI*(sample*error);
+  double D = kD((error-previousError)/sample);
+
+  return P + I + D;
+
+
+};

@@ -19,6 +19,7 @@
 #include "vex.h"
 #include "robot-config.h"
 #include "RobotMethods.h"
+#include "PIDControl.h"
 using namespace vex;
 vex::brain brain;
 vex::motor LeftMotor = vex::motor(vex::PORT12, vex::gearSetting::ratio18_1, false);
@@ -31,54 +32,56 @@ vex::motor Tower2 = vex::motor(vex::PORT10, vex::gearSetting::ratio18_1, true);
 //vex::limit fullTower = limit(Brain.ThreeWirePort.A); 
 //vex::limit towerUp = limit(Brain.ThreeWirePort.B);
 vex::controller Controller1 = vex::controller();
-double kP = 1;
-double kI = 1;
-double kD = 1;
 
 int main() {        
-    Intake1.spin(directionType::fwd, CalculatePID(50), velocityUnits::pct);
-    Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
-    bool intake = false;
+    //Intake1.spin(directionType::fwd, 75, velocityUnits::pct);
+    //Intake2.spin(directionType::fwd, 75, velocityUnits::pct);
+    //bool intake = false;
 
     while (true) {          
-        LeftMotor.spin(directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())/1, velocityUnits::pct); 
-        RightMotor.spin(directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())/1, velocityUnits::pct);
 
-        if(Controller1.ButtonY.pressing())
+        if(Controller1.ButtonX.pressing())
         {
           Tower1.spin(directionType::fwd, 100, velocityUnits::pct);
           Tower2.spin(directionType::rev, 100, velocityUnits::pct);
         }
-        if(Controller1.ButtonX.pressing())
+        else
         {
-          Tower1.spin(directionType::rev, 100, velocityUnits::pct);
-          Tower2.spin(directionType::fwd, 100, velocityUnits::pct);
+          Tower1.stop(brakeType::hold);
+          Tower2.stop(brakeType::hold);
+        }
+        if(Controller1.ButtonY.pressing())
+        {
+          Tower1.spin(directionType::rev, 25, velocityUnits::pct);
+          Tower2.spin(directionType::fwd, 25, velocityUnits::pct);
+        }
+        else
+        {
+          Tower1.stop(brakeType::hold);
+          Tower2.stop(brakeType::hold);
         }
         if(Controller1.ButtonUp.pressing())
         {
           Lift.spin(directionType::fwd, Controller1.Axis2.value(), velocityUnits::pct);
         }
         
-        if(Controller1.ButtonA.pressing())
+        if(Controller1.ButtonR1.pressing())
         {
-           if(Intake1.isSpinning())
-            {
-                Intake1.stop();
-                Intake2.stop();
-                task::sleep(500);
-            }
-            else
-            {
-                Intake1.spin(directionType::fwd, 50, velocityUnits::pct);
-                Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
-                task::sleep(500);
-            }
-            task::sleep(500);
+          Intake1.spin(directionType::fwd, 50, velocityUnits::pct);
+          Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
         }
-        
-      Tower1.stop();
-      Tower2.stop();
-      Lift.stop();
+        if(Controller1.ButtonDown.pressing())
+        {
+          Intake1.spin(directionType::rev, 50, velocityUnits::pct);
+          Intake2.spin(directionType::rev, 50, velocityUnits::pct);
+        }
+        else
+        {
+          Intake1.stop();
+          Intake2.stop();
+        }
+      LeftMotor.spin(directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())/1, velocityUnits::pct); 
+      RightMotor.spin(directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())/1, velocityUnits::pct);
       task::sleep(10); 
     } 
   }
@@ -134,12 +137,62 @@ int main() {
 // /*  You must modify the code to add your own robot specific commands here.   */
 // /*---------------------------------------------------------------------------*/
 // 
-// void autonomous( void ) {
-//   // ..........................................................................
-//   // Insert autonomous user code here.
-//   // ..........................................................................
-// 
-// }
+ void autonomous( void ) {
+   
+  /*void autoncode()
+  {
+    Intake1.spin(directionType::fwd, 50, velocityUnits::pct);
+    Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
+    LeftMotor.resetRotation();
+    RightMotor.resetRotation();
+    LeftMotor.startRotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct); 
+    RightMotor.rotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct);
+
+    Intake1.stop();
+    Intake2.stop();
+
+    LeftMotor.resetRotation();
+    RightMotor.resetRotation();
+    LeftMotor.startRotateTo(-1000, rotationUnits::deg, 50, velocityUnits::pct); 
+    RightMotor.rotateTo(-1000, rotationUnits::deg, 50, velocityUnits::pct);
+
+    LeftMotor.resetRotation();
+    RightMotor.resetRotation();
+    LeftMotor.startRotateTo(-300, rotationUnits::deg, 50, velocityUnits::pct); 
+    RightMotor.rotateTo(300, rotationUnits::deg, 50, velocityUnits::pct);
+
+    LeftMotor.resetRotation();
+    RightMotor.resetRotation();
+    LeftMotor.startRotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct); 
+    RightMotor.rotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct);
+
+    //Tower1.resetRotation();
+    Tower2.resetRotation();
+    Tower1.startRotateTo(300, rotationUnits::deg, 50, velocityUnits::pct); 
+    Tower2.rotateTo(-300, rotationUnits::deg, 50, velocityUnits::pct);
+    Tower1.stop(brakeType::hold);
+    Tower2.stop(brakeType::hold);//
+
+    Lift.resetRotation();
+    Lift.rotateTo(300, rotationUnits::deg, 50, velocityUnits::pct);
+    Lift.rotateTo(500, rotationUnits::deg, 25, velocityUnits::pct);
+
+    LeftMotor.resetRotation();
+    RightMotor.resetRotation();
+    LeftMotor.startRotateTo(-200, rotationUnits::deg, 50, velocityUnits::pct); 
+    RightMotor.rotateTo(-200, rotationUnits::deg, 50, velocityUnits::pct);
+    Intake1.spin(directionType::rev, 50, velocityUnits::pct);
+    Intake2.spin(directionType::rev, 50, velocityUnits::pct);
+
+  
+    }*/
+    
+
+
+
+
+ 
+ }
 // 
 // /*---------------------------------------------------------------------------*/
 // /*                                                                           */

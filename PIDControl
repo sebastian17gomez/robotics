@@ -1,14 +1,15 @@
-double CalculatePID(double SetPoint);
+double CalculatePID(double setPoint);
+double driveForward(double rotation);
+double turn(double rotation);
 class PIDControl
 {
-  private:
+  public:
     double kP;
     double kI;
     double kD;
     double sample;
     double previousError;
     double processVariable;
-  public:
     double setPoint;
 };
 #include "RobotMethods.h"
@@ -24,7 +25,7 @@ double CalculatePID(double setPoint, double processVariable)
 
   double P = kP*error;
   double I = kI*(sample*error);
-  double D = kD((error-previousError)/sample);
+  double D = kD*((error-previousError)/sample);
 
   return P + I + D;
 

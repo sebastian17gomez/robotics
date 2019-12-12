@@ -1,0 +1,11 @@
+double CalculatePID(double setPoint);
+void straight(double rotation)
+{
+  driveLeft.startRotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+  driveRight.rotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+}
+void turn(double rotation)
+{
+  driveLeft.startRotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+  driveRight.rotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+}

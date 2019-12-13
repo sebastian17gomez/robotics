@@ -1,15 +1,15 @@
 double CalculatePID(double setPoint);
 void straight(double rotation)
 {
-  driveLeft.resetRotations();
-  driveRight.resetRotations();
-  driveLeft.startRotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
-  driveRight.rotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+  MotorLeft.resetRotations();
+  MotorRight.resetRotations();
+  MotorLeft.startRotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+  MotorRight.rotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
 }
 void turn(double rotation)
 {
-  driveLeft.resetRotations();
-  driveRight.resetRotations();
-  driveLeft.startRotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
-  driveRight.rotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+  MotorLeft.resetRotations();
+  MotorRight.resetRotations();
+  MotorLeft.startRotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
+  MotorRight.rotateTo(rotation,rotationUnits::deg,CalculatePID(75),velocityUnits::pct);
 }

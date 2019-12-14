@@ -1,0 +1,175 @@
+#include "vex.h"
+#include "robot-config.h"
+using namespace vex;
+motor LeftMotor = motor(PORT12, gearSetting::ratio18_1, false);
+motor RightMotor = motor(PORT20, gearSetting::ratio18_1, true);
+motor Intake1 = motor(PORT2, gearSetting::ratio18_1, false);
+motor Intake2 = motor(PORT9, gearSetting::ratio18_1, true);
+motor Lift = motor(PORT11, gearSetting::ratio18_1, true);
+motor Tower1 = motor(PORT1, gearSetting::ratio18_1, true);
+motor Tower2 = motor(PORT10, gearSetting::ratio18_1, true);
+//vex::limit fullTower = limit(Brain.ThreeWirePort.A); 
+//vex::limit towerUp = limit(Brain.ThreeWirePort.B);
+controller Controller = controller(controllerType::primary);
+
+static int alliance;
+static int fieldPosition;
+
+//Methods
+void wait(double miliseconds)
+{
+  task::sleep(miliseconds);
+}
+void straight(double degrees, double speed, bool coast)
+{
+  LeftMotor.resetRotation();
+  RightMotor.resetRotation();
+  LeftMotor.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  RightMotor.rotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  if(coast==true)
+  {
+    Tower1.stop(brakeType::coast);
+    Tower2.stop(brakeType::coast);
+  }
+  while(LeftMotor.isSpinning()&&RightMotor.isSpinning())
+  {
+    wait(10);
+  }
+}
+void robotTurn(double degrees, double speed)
+{
+  LeftMotor.resetRotation();
+  RightMotor.resetRotation();
+  LeftMotor.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  RightMotor.rotateTo(-degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  while(LeftMotor.isSpinning()&&RightMotor.isSpinning())
+  {
+    wait(10);
+  }
+}
+void towers(double degrees)
+{
+  Tower1.resetRotation();
+  Tower2.resetRotation();
+  Tower1.startRotateTo(degrees, rotationUnits::deg, 100, velocityUnits::pct); 
+  Tower2.rotateTo(-degrees, rotationUnits::deg, 100, velocityUnits::pct);
+  Tower1.stop(brakeType::hold);
+  Tower2.stop(brakeType::hold);
+}
+void rampDown()
+{
+  Lift.resetRotation();
+  Lift.rotateTo(-700, rotationUnits::deg, 50, velocityUnits::pct);
+  Lift.stop(brakeType::coast);
+  straight(100,10,true);
+  Lift.rotateTo(-1000, rotationUnits::deg, 30, velocityUnits::pct);
+  Lift.stop(brakeType::hold);
+  straight(25,10,true);
+  wait(500);
+}
+void deploy()
+{
+  Lift.startRotateTo(-800,rotationUnits::deg,100,velocityUnits::pct);
+  Intake1.spin(directionType::rev, 75, velocityUnits::pct);
+  Intake2.spin(directionType::rev, 75, velocityUnits::pct);
+  Tower1.startRotateTo(500, rotationUnits::deg, 100, velocityUnits::pct); 
+  Tower2.rotateTo(-500, rotationUnits::deg, 100, velocityUnits::pct);
+  Tower1.startRotateTo(500, rotationUnits::deg, 100, velocityUnits::pct); 
+  Tower2.rotateTo(-500, rotationUnits::deg, 100, velocityUnits::pct);
+  Tower1.startRotateTo(-500, rotationUnits::deg, 100, velocityUnits::pct); 
+  Tower2.rotateTo(500, rotationUnits::deg, 100, velocityUnits::pct);
+  Lift.rotateTo(800,rotationUnits::deg,100,velocityUnits::pct);
+}
+int pre_auton()
+{
+  Controller.Screen.clearScreen();
+  Controller.Screen.setCursor(1,1);
+  Controller.Screen.print("Blue Press A");
+  Controller.Screen.setCursor(2,1);
+  Controller.Screen.print("Red Press B");
+  while (true)
+  {
+    if (Controller.ButtonA.pressing())
+    {
+      alliance=0;
+      Controller.Screen.clearScreen();
+      Controller.Screen.setCursor(1,1);
+      Controller.Screen.print("Blue5L Press Left");
+      Controller.Screen.setCursor(2,1);
+      Controller.Screen.print("Blue1R Press Right");
+      break;
+    }
+    if (Controller.ButtonB.pressing())
+    {
+      alliance=1;
+      Controller.Screen.clearScreen();
+      Controller.Screen.setCursor(1,1);
+      Controller.Screen.print("Red5R Press Right");
+      Controller.Screen.setCursor(2,1);
+      Controller.Screen.print("Red1L Press Left");
+      break;
+    }
+  }
+  while(true)
+  {
+    if (alliance == 0)
+    {
+      if (Controller.ButtonLeft.pressing())
+      {
+        fieldPosition=1;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Blue 5pt Left");
+        break;
+      }
+      else if (Controller.ButtonRight.pressing())
+      {
+        fieldPosition=3;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Blue 1pt Right");
+        break;
+      }
+    }
+    else if (alliance == 1)
+    {
+      if (Controller.ButtonRight.pressing())
+      {
+        fieldPosition=2;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Red 5pt Right");
+        break;
+      }
+      else if (Controller.ButtonLeft.pressing())
+      {
+        fieldPosition=3;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Red 1pt Left");
+        break;
+      }
+    }
+  }
+  return 0;
+}
+ int main() {
+    Intake1.spin(directionType::fwd, 60, velocityUnits::pct);
+    Intake2.spin(directionType::fwd, 60, velocityUnits::pct);
+    straight(400,50, true);
+    straight(700,10, false);
+    straight(-500, 20, false);
+    robotTurn(-500, 30);
+    straight(600, 20, true);
+    Intake1.stop();
+    Intake2.stop();
+    Intake1.spin(directionType::rev, 20, velocityUnits::pct);
+    Intake2.spin(directionType::rev, 20, velocityUnits::pct);
+    rampDown();
+    straight(-200, 30, true);
+  //Prevent main from exiting with an infinite loop.                        
+  while(1) {
+  vex::task::sleep(100); //Sleep the task for a short amount of time to prevent wasted resources.
+  }  
+    
+  }

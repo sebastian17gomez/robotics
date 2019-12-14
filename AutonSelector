@@ -1,3 +1,89 @@
-controller1.setCursor(1,1)
-controller1.print("Red");
-controller1.print("Blue");
+Controller.Screen.clearScreen();
+  Controller.Screen.setCursor(1,1);
+  Controller.Screen.print("Blue Press A");
+  Controller.Screen.setCursor(2,1);
+  Controller.Screen.print("Red Press B");
+  while (true)
+  {
+    if (Controller.ButtonA.pressing())
+    {
+      alliance=0;
+      Controller.Screen.clearScreen();
+      Controller.Screen.setCursor(1,1);
+      Controller.Screen.print("Blue5L Press Left");
+      Controller.Screen.setCursor(2,1);
+      Controller.Screen.print("Blue1R Press Right");
+      Controller.Screen.setCursor(3,1);
+      Controller.Screen.print("Bypass Press X");
+      break;
+    }
+    else if (Controller.ButtonB.pressing())
+    {
+      alliance=1;
+      Controller.Screen.clearScreen();
+      Controller.Screen.setCursor(1,1);
+      Controller.Screen.print("Red5R Press Right");
+      Controller.Screen.setCursor(2,1);
+      Controller.Screen.print("Red1L Press Left");
+      Controller.Screen.setCursor(3,1);
+      Controller.Screen.print("Bypass Press X");
+      break;
+    }
+  }
+  while(true)
+  {
+    if (alliance == 0)
+    {
+      if (Controller.ButtonLeft.pressing())
+      {
+        fieldPosition=1;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Blue 5pt Left");
+        break;
+      }
+      else if (Controller.ButtonRight.pressing())
+      {
+        fieldPosition=3;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Blue 1pt Right");
+        break;
+      }
+      else if (Controller.ButtonX.pressing())
+      {
+        fieldPosition=4;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Auton Bypassed");
+        break;
+      }
+    }
+    else if (alliance == 1)
+    {
+      if (Controller.ButtonRight.pressing())
+      {
+        fieldPosition=2;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Red 5pt Right");
+        break;
+      }
+      else if (Controller.ButtonLeft.pressing())
+      {
+        fieldPosition=3;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Red 1pt Left");
+        break;
+      }
+      else if (Controller.ButtonX.pressing())
+      {
+        fieldPosition=4;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Auton Bypassed");
+        break;
+      }
+    }
+  }

@@ -21,112 +21,178 @@
 #include "RobotMethods.h"
 #include "PIDControl.h"
 using namespace vex;
-vex::brain brain;
-vex::motor LeftMotor = vex::motor(vex::PORT12, vex::gearSetting::ratio18_1, false);
-vex::motor RightMotor = vex::motor(vex::PORT20, vex::gearSetting::ratio18_1, true);
-vex::motor Intake1 = vex::motor(vex::PORT2, vex::gearSetting::ratio18_1, false);
-vex::motor Intake2 = vex::motor(vex::PORT9, vex::gearSetting::ratio18_1, true);
-vex::motor Lift = vex::motor(vex::PORT11, vex::gearSetting::ratio18_1, true);
-vex::motor Tower1 = vex::motor(vex::PORT1, vex::gearSetting::ratio18_1, true);
-vex::motor Tower2 = vex::motor(vex::PORT10, vex::gearSetting::ratio18_1, true);
+motor LeftMotor = motor(PORT12, gearSetting::ratio18_1, false);
+motor RightMotor = motor(PORT20, gearSetting::ratio18_1, true);
+motor Intake1 = motor(PORT2, gearSetting::ratio18_1, false);
+motor Intake2 = motor(PORT9, gearSetting::ratio18_1, true);
+motor Lift = motor(PORT11, gearSetting::ratio18_1, true);
+motor Tower1 = motor(PORT3, gearSetting::ratio18_1, true);
+motor Tower2 = motor(PORT10, gearSetting::ratio18_1, true);
 //vex::limit fullTower = limit(Brain.ThreeWirePort.A); 
 //vex::limit towerUp = limit(Brain.ThreeWirePort.B);
-vex::controller Controller1 = vex::controller();
+controller Controller = controller(controllerType::primary);
+competition Competition;
 
-int main() {        
-    //Intake1.spin(directionType::fwd, 75, velocityUnits::pct);
-    //Intake2.spin(directionType::fwd, 75, velocityUnits::pct);
-    //bool intake = false;
+static int alliance;
+static int fieldPosition;
+static bool checker = false;
 
-    while (true) {          
-
-        if(Controller1.ButtonX.pressing())
-        {
-          Tower1.spin(directionType::fwd, 100, velocityUnits::pct);
-          Tower2.spin(directionType::rev, 100, velocityUnits::pct);
-        }
-        else
-        {
-          Tower1.stop(brakeType::hold);
-          Tower2.stop(brakeType::hold);
-        }
-        if(Controller1.ButtonY.pressing())
-        {
-          Tower1.spin(directionType::rev, 25, velocityUnits::pct);
-          Tower2.spin(directionType::fwd, 25, velocityUnits::pct);
-        }
-        else
-        {
-          Tower1.stop(brakeType::hold);
-          Tower2.stop(brakeType::hold);
-        }
-        if(Controller1.ButtonUp.pressing())
-        {
-          Lift.spin(directionType::fwd, Controller1.Axis2.value(), velocityUnits::pct);
-        }
-        
-        if(Controller1.ButtonR1.pressing())
-        {
-          Intake1.spin(directionType::fwd, 50, velocityUnits::pct);
-          Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
-        }
-        if(Controller1.ButtonDown.pressing())
-        {
-          Intake1.spin(directionType::rev, 50, velocityUnits::pct);
-          Intake2.spin(directionType::rev, 50, velocityUnits::pct);
-        }
-        else
-        {
-          Intake1.stop();
-          Intake2.stop();
-        }
-      LeftMotor.spin(directionType::fwd, (Controller1.Axis3.value() + Controller1.Axis1.value())/1, velocityUnits::pct); 
-      RightMotor.spin(directionType::fwd, (Controller1.Axis3.value() - Controller1.Axis1.value())/1, velocityUnits::pct);
-      task::sleep(10); 
-    } 
+//Methods
+void wait(double miliseconds)
+{
+  task::sleep(miliseconds);
+}
+void straight(double degrees, double speed, bool coast)
+{
+  LeftMotor.resetRotation();
+  RightMotor.resetRotation();
+  LeftMotor.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  RightMotor.rotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  if(coast==true)
+  {
+    Tower1.stop(brakeType::coast);
+    Tower2.stop(brakeType::coast);
   }
+  while(LeftMotor.isSpinning()&&RightMotor.isSpinning())
+  {
+    wait(10);
+  }
+}
+void robotTurn(double degrees, double speed)
+{
+  LeftMotor.resetRotation();
+  RightMotor.resetRotation();
+  LeftMotor.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  RightMotor.rotateTo(-degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  while(LeftMotor.isSpinning()&&RightMotor.isSpinning())
+  {
+    wait(10);
+  }
+}
+void towers(double degrees)
+{
+  Tower1.resetRotation();
+  Tower2.resetRotation();
+  Tower1.startRotateTo(degrees, rotationUnits::deg, 100, velocityUnits::pct); 
+  Tower2.rotateTo(-degrees, rotationUnits::deg, 100, velocityUnits::pct);
+  Tower1.stop(brakeType::hold);
+  Tower2.stop(brakeType::hold);
+}
+void rampDown()
+{
+  Lift.resetRotation();
+  Lift.rotateTo(-700, rotationUnits::deg, 50, velocityUnits::pct);
+  Lift.stop(brakeType::coast);
+  Lift.rotateTo(-1100, rotationUnits::deg, 30, velocityUnits::pct);
+  straight(25,20,false);
+  Lift.stop(brakeType::hold);
+  wait(500);
+}
+void deploy()
+{
+  Lift.startRotateTo(-800,rotationUnits::deg,100,velocityUnits::pct);
+  Intake1.spin(directionType::rev, 75, velocityUnits::pct);
+  Intake2.spin(directionType::rev, 75, velocityUnits::pct);
+  Tower1.startRotateTo(500, rotationUnits::deg, 80, velocityUnits::pct); 
+  Tower2.rotateTo(-500, rotationUnits::deg, 80, velocityUnits::pct);
+  Lift.startRotateTo(800,rotationUnits::deg,100,velocityUnits::pct);
+  Tower1.startRotateTo(-300, rotationUnits::deg, 100, velocityUnits::pct); 
+  Tower2.rotateTo(300, rotationUnits::deg, 100, velocityUnits::pct);
+}
 
-// /*----------------------------------------------------------------------------*/
-// /*                                                                            */
-// /*    Module:       main.cpp                                                  */
-// /*    Author:       C:\Users\yeunga                                           */
-// /*    Created:      Thu Sep 19 2019                                           */
-// /*    Description:  V5 project                                                */
-// /*                                                                            */
-// /*----------------------------------------------------------------------------*/
-// #include "vex.h"
-// 
-// // ---- START VEXCODE CONFIGURED DEVICES ----
-// // Robot Configuration:
-// // [Name]               [Type]        [Port(s)]
-// // ---- END VEXCODE CONFIGURED DEVICES ----
-// 
-// using namespace vex;
-// 
-// // A global instance of vex::brain used for printing to the V5 brain screen
-// brain       Brain;
-// // A global instance of vex::competition
-// competition Competition;
-// 
-// // define your global instances of motors and other devices here
-// motor mtrDR = motor(PORT1)
-// 
-// /*---------------------------------------------------------------------------*/
-// /*                          Pre-Autonomous Functions                         */
-// /*                                                                           */
-// /*  You may want to perform some actions before the competition starts.      */
-// /*  Do them in the following function.  You must return from this function   */
-// /*  or the autonomous and usercontrol tasks will not be started.  This       */
-// /*  function is only called once after the cortex has been powered on and    */ 
-// /*  not every time that the robot is disabled.                               */
-// /*---------------------------------------------------------------------------*/
-// 
-// void pre_auton( void ) {
-//   // All activities that occur before the competition starts
-//   // Example: clearing encoders, setting servo positions, ...
-//   
-// }
-// 
+void pre_auton(void)
+{
+  Controller.Screen.clearScreen();
+  Controller.Screen.setCursor(1,1);
+  Controller.Screen.print("Blue Press A");
+  Controller.Screen.setCursor(2,1);
+  Controller.Screen.print("Red Press B");
+  while (true)
+  {
+    if (Controller.ButtonA.pressing())
+    {
+      alliance=0;
+      Controller.Screen.clearScreen();
+      Controller.Screen.setCursor(1,1);
+      Controller.Screen.print("Blue5L Press Left");
+      Controller.Screen.setCursor(2,1);
+      Controller.Screen.print("Blue1R Press Right");
+      Controller.Screen.setCursor(3,1);
+      Controller.Screen.print("Bypass Press X");
+      break;
+    }
+    else if (Controller.ButtonB.pressing())
+    {
+      alliance=1;
+      Controller.Screen.clearScreen();
+      Controller.Screen.setCursor(1,1);
+      Controller.Screen.print("Red5R Press Right");
+      Controller.Screen.setCursor(2,1);
+      Controller.Screen.print("Red1L Press Left");
+      Controller.Screen.setCursor(3,1);
+      Controller.Screen.print("Bypass Press X");
+      break;
+    }
+  }
+  while(true)
+  {
+    if (alliance == 0)
+    {
+      if (Controller.ButtonLeft.pressing())
+      {
+        fieldPosition=1;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Blue 5pt Left");
+        break;
+      }
+      else if (Controller.ButtonRight.pressing())
+      {
+        fieldPosition=3;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Blue 1pt Right");
+        break;
+      }
+      else if (Controller.ButtonX.pressing())
+      {
+        fieldPosition=4;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Auton Bypassed");
+        break;
+      }
+    }
+    else if (alliance == 1)
+    {
+      if (Controller.ButtonRight.pressing())
+      {
+        fieldPosition=2;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Red 5pt Right");
+        break;
+      }
+      else if (Controller.ButtonLeft.pressing())
+      {
+        fieldPosition=3;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Red 1pt Left");
+        break;
+      }
+      else if (Controller.ButtonX.pressing())
+      {
+        fieldPosition=4;
+        Controller.Screen.clearScreen();
+        Controller.Screen.setCursor(1,1);
+        Controller.Screen.print("Auton Bypassed");
+        break;
+      }
+    }
+  }
+  
+}
 // /*---------------------------------------------------------------------------*/
 // /*                                                                           */
 // /*                              Autonomous Task                              */
@@ -137,63 +203,64 @@ int main() {
 // /*  You must modify the code to add your own robot specific commands here.   */
 // /*---------------------------------------------------------------------------*/
 // 
- void autonomous( void ) {
-   
-  /*void autoncode()
+ void auton( void ) {
+  
+  switch(fieldPosition)
   {
-    Intake1.spin(directionType::fwd, 50, velocityUnits::pct);
-    Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
-    LeftMotor.resetRotation();
-    RightMotor.resetRotation();
-    LeftMotor.startRotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct); 
-    RightMotor.rotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct);
-
+    case 1: //Blue Single 5 Pt
+    {
+    deploy();
+    Intake1.spin(directionType::fwd, 60, velocityUnits::pct);
+    Intake2.spin(directionType::fwd, 60, velocityUnits::pct);
+    straight(400,50, true);
+    straight(700,20, false);
+    straight(-500, 40, false);
+    robotTurn(-485, 50);
+    straight(600, 30, true);
     Intake1.stop();
     Intake2.stop();
+    Intake1.spin(directionType::rev, 30, velocityUnits::pct);
+    Intake2.spin(directionType::rev, 30, velocityUnits::pct);
+    rampDown();
+    straight(-500, 30, true);
+    Lift.rotateTo(900, rotationUnits::deg, 50, velocityUnits::pct);
+    Lift.stop();
+    break;
+    }
+    case 2: //Red Single 5pt
+    {
+    deploy();
+    Intake1.spin(directionType::fwd, 60, velocityUnits::pct);
+    Intake2.spin(directionType::fwd, 60, velocityUnits::pct);
+    straight(400,50, true);
+    straight(700,20, false);
+    straight(-500, 40, false);
+    robotTurn(485, 50);
+    straight(600, 30, true);
+    Intake1.stop();
+    Intake2.stop();
+    Intake1.spin(directionType::rev, 30, velocityUnits::pct);
+    Intake2.spin(directionType::rev, 30, velocityUnits::pct);
+    rampDown();
+    straight(-500, 30, true);
+    Lift.rotateTo(900, rotationUnits::deg, 50, velocityUnits::pct);
+    Lift.stop();
+    break;
+    }
+    case 3: //Either Alliance 1 pt
+    {
+      straight (-1200, 50, false);
+      straight (300, 50, true);
+      deploy();
 
-    LeftMotor.resetRotation();
-    RightMotor.resetRotation();
-    LeftMotor.startRotateTo(-1000, rotationUnits::deg, 50, velocityUnits::pct); 
-    RightMotor.rotateTo(-1000, rotationUnits::deg, 50, velocityUnits::pct);
-
-    LeftMotor.resetRotation();
-    RightMotor.resetRotation();
-    LeftMotor.startRotateTo(-300, rotationUnits::deg, 50, velocityUnits::pct); 
-    RightMotor.rotateTo(300, rotationUnits::deg, 50, velocityUnits::pct);
-
-    LeftMotor.resetRotation();
-    RightMotor.resetRotation();
-    LeftMotor.startRotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct); 
-    RightMotor.rotateTo(2000, rotationUnits::deg, 50, velocityUnits::pct);
-
-    //Tower1.resetRotation();
-    Tower2.resetRotation();
-    Tower1.startRotateTo(300, rotationUnits::deg, 50, velocityUnits::pct); 
-    Tower2.rotateTo(-300, rotationUnits::deg, 50, velocityUnits::pct);
-    Tower1.stop(brakeType::hold);
-    Tower2.stop(brakeType::hold);//
-
-    Lift.resetRotation();
-    Lift.rotateTo(300, rotationUnits::deg, 50, velocityUnits::pct);
-    Lift.rotateTo(500, rotationUnits::deg, 25, velocityUnits::pct);
-
-    LeftMotor.resetRotation();
-    RightMotor.resetRotation();
-    LeftMotor.startRotateTo(-200, rotationUnits::deg, 50, velocityUnits::pct); 
-    RightMotor.rotateTo(-200, rotationUnits::deg, 50, velocityUnits::pct);
-    Intake1.spin(directionType::rev, 50, velocityUnits::pct);
-    Intake2.spin(directionType::rev, 50, velocityUnits::pct);
-
-  
-    }*/
-    
-
-
-
-
- 
+      break;
+    }
+    case 4:
+    {
+      break;
+    }
+  }
  }
-// 
 // /*---------------------------------------------------------------------------*/
 // /*                                                                           */
 // /*                              User Control Task                            */
@@ -203,37 +270,64 @@ int main() {
 // /*                                                                           */
 // /*  You must modify the code to add your own robot specific commands here.   */
 // /*---------------------------------------------------------------------------*/
-// 
-// void usercontrol( void ) {
-//   // User control code here, inside the loop
-//   while (1) {
-//     // This is the main execution loop for the user control program.
-//     // Each time through the loop your program should update motor + servo 
-//     // values based on feedback from the joysticks.
-// 
-//     // ........................................................................
-//     // Insert user code here. This is where you use the joystick values to 
-//     // update your motors, etc.
-//     // ........................................................................
-//  
-//     vex::task::sleep(20); //Sleep the task for a short amount of time to prevent wasted resources. 
-//   }
-// }
-// 
-// //
-// // Main will set up the competition functions and callbacks.
-// //
-// int main() {
-//     //Set up callbacks for autonomous and driver control periods.
-//     Competition.autonomous( autonomous );
-//     Competition.drivercontrol( usercontrol );
-//     
-//     //Run the pre-autonomous function. 
-//     pre_auton();
-//        
-//     //Prevent main from exiting with an infinite loop.                        
-//     while(1) {
-//       vex::task::sleep(100);//Sleep the task for a short amount of time to prevent wasted resources.
-//     }    
-//        
-// }
+void usercontrol(void)
+{
+  while (true) {          
+
+        if(Controller.ButtonX.pressing())
+        {
+          Tower1.spin(directionType::fwd, 100, velocityUnits::pct);
+          Tower2.spin(directionType::rev, 100, velocityUnits::pct);
+        }
+        else if(Controller.ButtonY.pressing())
+        {
+          Tower1.spin(directionType::rev, 25, velocityUnits::pct);
+          Tower2.spin(directionType::fwd, 25, velocityUnits::pct);
+        }
+        else 
+        {
+          Tower1.stop(brakeType::hold);
+          Tower2.stop(brakeType::hold);
+        }
+        if(Controller.ButtonUp.pressing())
+        {
+          Lift.spin(directionType::fwd, Controller.Axis2.value(), velocityUnits::pct);
+        }
+        else
+        {
+          Lift.stop((brakeType::coast));
+        }
+        
+        if(Controller.ButtonR1.pressing())
+        {
+          Intake1.spin(directionType::fwd, 50, velocityUnits::pct);
+          Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
+        }
+        else if(Controller.ButtonDown.pressing())
+        {
+          Intake1.spin(directionType::rev, 50, velocityUnits::pct);
+          Intake2.spin(directionType::rev, 50, velocityUnits::pct);
+        }
+        else
+        {
+          Intake1.stop();
+          Intake2.stop();
+        }
+      LeftMotor.spin(directionType::fwd, (Controller.Axis3.value() + Controller.Axis1.value())/1, velocityUnits::pct); 
+      RightMotor.spin(directionType::fwd, (Controller.Axis3.value() - Controller.Axis1.value())/1, velocityUnits::pct);
+      task::sleep(10); 
+    } 
+}
+// Main will set up the competition functions and callbacks.
+ int main() 
+{
+  Competition.autonomous(auton);        
+  Competition.drivercontrol(usercontrol);
+  pre_auton();
+  //Prevent main from exiting with an infinite loop.                        
+  while(1) 
+  {
+  vex::task::sleep(100); //Sleep the task for a short amount of time to prevent wasted resources.
+  }  
+    
+}

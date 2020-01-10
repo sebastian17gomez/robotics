@@ -18,24 +18,26 @@
 
 #include "vex.h"
 #include "robot-config.h"
-#include "RobotMethods.h"
 #include "PIDControl.h"
+#include <iostream>
 using namespace vex;
-motor LeftMotor = motor(PORT12, gearSetting::ratio18_1, false);
-motor RightMotor = motor(PORT20, gearSetting::ratio18_1, true);
-motor Intake1 = motor(PORT2, gearSetting::ratio18_1, false);
-motor Intake2 = motor(PORT9, gearSetting::ratio18_1, true);
-motor Lift = motor(PORT11, gearSetting::ratio18_1, true);
-motor Tower1 = motor(PORT3, gearSetting::ratio18_1, true);
-motor Tower2 = motor(PORT10, gearSetting::ratio18_1, true);
+motor LeftMotor = motor(PORT19, gearSetting::ratio18_1, true);
+motor RightMotor = motor(PORT12, gearSetting::ratio18_1, false);
+motor LeftMotor2 = motor(PORT20, gearSetting::ratio18_1, true);
+motor RightMotor2 = motor(PORT11, gearSetting::ratio18_1, false);
+motor Intake1 = motor(PORT3, gearSetting::ratio18_1, true);
+motor Intake2 = motor(PORT8, gearSetting::ratio18_1, false);
+motor Lift = motor(PORT5, gearSetting::ratio18_1, true);
+motor Tower1 = motor(PORT1, gearSetting::ratio6_1, false);
+//motor Tower2 = motor(PORT10, gearSetting::ratio18_1, true);
 //vex::limit fullTower = limit(Brain.ThreeWirePort.A); 
 //vex::limit towerUp = limit(Brain.ThreeWirePort.B);
 controller Controller = controller(controllerType::primary);
 competition Competition;
+PIDControl move = PIDControl(1,0.5,0.3,10);
 
 static int alliance;
 static int fieldPosition;
-static bool checker = false;
 
 //Methods
 void wait(double miliseconds)
@@ -45,13 +47,19 @@ void wait(double miliseconds)
 void straight(double degrees, double speed, bool coast)
 {
   LeftMotor.resetRotation();
+  LeftMotor2.resetRotation();
   RightMotor.resetRotation();
+  RightMotor2.resetRotation();
   LeftMotor.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  LeftMotor2.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
   RightMotor.rotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  RightMotor2.rotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
   if(coast==true)
   {
-    Tower1.stop(brakeType::coast);
-    Tower2.stop(brakeType::coast);
+    LeftMotor.stop(brakeType::coast);
+    LeftMotor2.stop(brakeType::coast);
+    RightMotor.stop(brakeType::coast);
+    RightMotor2.stop(brakeType::coast);
   }
   while(LeftMotor.isSpinning()&&RightMotor.isSpinning())
   {
@@ -61,9 +69,13 @@ void straight(double degrees, double speed, bool coast)
 void robotTurn(double degrees, double speed)
 {
   LeftMotor.resetRotation();
+  LeftMotor2.resetRotation();
   RightMotor.resetRotation();
+  RightMotor2.resetRotation();
   LeftMotor.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  LeftMotor2.startRotateTo(degrees,rotationUnits::deg,speed,velocityUnits::pct);
   RightMotor.rotateTo(-degrees,rotationUnits::deg,speed,velocityUnits::pct);
+  RightMotor2.rotateTo(-degrees,rotationUnits::deg,speed,velocityUnits::pct);
   while(LeftMotor.isSpinning()&&RightMotor.isSpinning())
   {
     wait(10);
@@ -72,32 +84,42 @@ void robotTurn(double degrees, double speed)
 void towers(double degrees)
 {
   Tower1.resetRotation();
-  Tower2.resetRotation();
+  //Tower2.resetRotation();
   Tower1.startRotateTo(degrees, rotationUnits::deg, 100, velocityUnits::pct); 
-  Tower2.rotateTo(-degrees, rotationUnits::deg, 100, velocityUnits::pct);
+  //Tower2.rotateTo(-degrees, rotationUnits::deg, 100, velocityUnits::pct);
   Tower1.stop(brakeType::hold);
-  Tower2.stop(brakeType::hold);
+  //Tower2.stop(brakeType::hold);
 }
 void rampDown()
 {
   Lift.resetRotation();
-  Lift.rotateTo(-700, rotationUnits::deg, 50, velocityUnits::pct);
-  Lift.stop(brakeType::coast);
-  Lift.rotateTo(-1100, rotationUnits::deg, 30, velocityUnits::pct);
+  Lift.rotateTo(700, rotationUnits::deg, 50, velocityUnits::pct);
+  Lift.stop(brakeType::hold);
+  Lift.rotateTo(600, rotationUnits::deg, 30, velocityUnits::pct);
+  Lift.startRotateTo(450, rotationUnits::deg, 20, velocityUnits::pct);
+  Tower1.startRotateTo(200, rotationUnits::deg, 50, velocityUnits::pct);
   straight(25,20,false);
   Lift.stop(brakeType::hold);
-  wait(500);
+  Lift.rotateTo(-300, rotationUnits::deg, 50, velocityUnits::pct);
 }
 void deploy()
 {
-  Lift.startRotateTo(-800,rotationUnits::deg,100,velocityUnits::pct);
-  Intake1.spin(directionType::rev, 75, velocityUnits::pct);
-  Intake2.spin(directionType::rev, 75, velocityUnits::pct);
+  Lift.rotateTo(1000,rotationUnits::deg,100,velocityUnits::pct);
+  Intake1.spin(directionType::rev, 100, velocityUnits::pct);
+  Intake2.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(100);
   Tower1.startRotateTo(500, rotationUnits::deg, 80, velocityUnits::pct); 
-  Tower2.rotateTo(-500, rotationUnits::deg, 80, velocityUnits::pct);
-  Lift.startRotateTo(800,rotationUnits::deg,100,velocityUnits::pct);
-  Tower1.startRotateTo(-300, rotationUnits::deg, 100, velocityUnits::pct); 
-  Tower2.rotateTo(300, rotationUnits::deg, 100, velocityUnits::pct);
+  //Tower2.startRotateTo(-500, rotationUnits::deg, 80, velocityUnits::pct);
+  task::sleep(2000);
+  Tower1.stop(brakeType::hold);
+  //Tower2.stop(brakeType::hold);
+  Lift.startRotateTo(1000,rotationUnits::deg,100,velocityUnits::pct);
+  Tower1.startRotateTo(-500, rotationUnits::deg, 50, velocityUnits::pct); 
+  //Tower2.startRotateTo(500, rotationUnits::deg, 50, velocityUnits::pct);
+  task::sleep(500);
+  Intake1.stop();
+  Intake2.stop();
+  task::sleep(100);
 }
 
 void pre_auton(void)
@@ -203,44 +225,46 @@ void pre_auton(void)
 // /*  You must modify the code to add your own robot specific commands here.   */
 // /*---------------------------------------------------------------------------*/
 // 
- void auton( void ) {
+ void auton( void ) { 
   
   switch(fieldPosition)
   {
     case 1: //Blue Single 5 Pt
     {
     deploy();
-    Intake1.spin(directionType::fwd, 60, velocityUnits::pct);
-    Intake2.spin(directionType::fwd, 60, velocityUnits::pct);
-    straight(400,50, true);
-    straight(700,20, false);
-    straight(-500, 40, false);
-    robotTurn(-485, 50);
+    Intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+    Intake2.spin(directionType::fwd, 100, velocityUnits::pct);
+    straight(200,30, true);
+    straight(500,20, false);
+    straight(-200, 40, false);
+    robotTurn(-400, 50);
     straight(600, 30, true);
     Intake1.stop();
     Intake2.stop();
     Intake1.spin(directionType::rev, 30, velocityUnits::pct);
     Intake2.spin(directionType::rev, 30, velocityUnits::pct);
     rampDown();
+    Intake1.spin(directionType::rev, 30, velocityUnits::pct); //testing
+    Intake2.spin(directionType::rev, 30, velocityUnits::pct);
     straight(-500, 30, true);
-    Lift.rotateTo(900, rotationUnits::deg, 50, velocityUnits::pct);
+    Lift.rotateTo(-400, rotationUnits::deg, 50, velocityUnits::pct);
     Lift.stop();
     break;
     }
     case 2: //Red Single 5pt
     {
     deploy();
-    Intake1.spin(directionType::fwd, 60, velocityUnits::pct);
-    Intake2.spin(directionType::fwd, 60, velocityUnits::pct);
-    straight(400,50, true);
-    straight(700,20, false);
-    straight(-500, 40, false);
-    robotTurn(485, 50);
-    straight(600, 30, true);
+    Intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+    Intake2.spin(directionType::fwd, 100, velocityUnits::pct);
+    straight(200,30, true);
+    straight(600,20, false);
+    straight(-200, 40, false);
+    robotTurn(450, 50);
+    straight(500, 30, true);
     Intake1.stop();
     Intake2.stop();
-    Intake1.spin(directionType::rev, 30, velocityUnits::pct);
-    Intake2.spin(directionType::rev, 30, velocityUnits::pct);
+    Intake1.spin(directionType::rev, 60, velocityUnits::pct);
+    Intake2.spin(directionType::rev, 60, velocityUnits::pct);
     rampDown();
     straight(-500, 30, true);
     Lift.rotateTo(900, rotationUnits::deg, 50, velocityUnits::pct);
@@ -249,7 +273,7 @@ void pre_auton(void)
     }
     case 3: //Either Alliance 1 pt
     {
-      straight (-1200, 50, false);
+      straight (-1125, 50, false);
       straight (300, 50, true);
       deploy();
 
@@ -273,21 +297,24 @@ void pre_auton(void)
 void usercontrol(void)
 {
   while (true) {          
-
         if(Controller.ButtonX.pressing())
         {
+          Tower1.setMaxTorque(100, percentUnits::pct);
+          //Tower2.setMaxTorque(100, percentUnits::pct);
           Tower1.spin(directionType::fwd, 100, velocityUnits::pct);
-          Tower2.spin(directionType::rev, 100, velocityUnits::pct);
+          //Tower2.spin(directionType::rev, 100, velocityUnits::pct);
+          
         }
-        else if(Controller.ButtonY.pressing())
+        else
+        if(Controller.ButtonY.pressing())
         {
-          Tower1.spin(directionType::rev, 25, velocityUnits::pct);
-          Tower2.spin(directionType::fwd, 25, velocityUnits::pct);
+          Tower1.spin(directionType::rev, 100, velocityUnits::pct);
+          //Tower2.spin(directionType::fwd, 25, velocityUnits::pct);
         }
         else 
         {
           Tower1.stop(brakeType::hold);
-          Tower2.stop(brakeType::hold);
+          //Tower2.stop(brakeType::hold);
         }
         if(Controller.ButtonUp.pressing())
         {
@@ -295,26 +322,33 @@ void usercontrol(void)
         }
         else
         {
-          Lift.stop((brakeType::coast));
+          Lift.stop((brakeType::hold));
         }
         
         if(Controller.ButtonR1.pressing())
         {
-          Intake1.spin(directionType::fwd, 50, velocityUnits::pct);
-          Intake2.spin(directionType::fwd, 50, velocityUnits::pct);
+          Intake1.spin(directionType::fwd, 100, velocityUnits::pct);
+          Intake2.spin(directionType::fwd, 100, velocityUnits::pct);
         }
-        else if(Controller.ButtonDown.pressing())
+        else if(Controller.ButtonL1.pressing())
         {
-          Intake1.spin(directionType::rev, 50, velocityUnits::pct);
-          Intake2.spin(directionType::rev, 50, velocityUnits::pct);
+          Intake1.spin(directionType::rev, 100, velocityUnits::pct);
+          Intake2.spin(directionType::rev, 100, velocityUnits::pct);
         }
         else
         {
-          Intake1.stop();
-          Intake2.stop();
+          Intake1.stop((brakeType::hold));
+          Intake2.stop((brakeType::hold));
+        }
+        if(Controller.ButtonL2.pressing()&&Controller.ButtonR2.pressing())
+        {
+          deploy();
+          //rampDown();
         }
       LeftMotor.spin(directionType::fwd, (Controller.Axis3.value() + Controller.Axis1.value())/1, velocityUnits::pct); 
+      LeftMotor2.spin(directionType::fwd, (Controller.Axis3.value() + Controller.Axis1.value())/1, velocityUnits::pct);
       RightMotor.spin(directionType::fwd, (Controller.Axis3.value() - Controller.Axis1.value())/1, velocityUnits::pct);
+      RightMotor2.spin(directionType::fwd, (Controller.Axis3.value() - Controller.Axis1.value())/1, velocityUnits::pct);
       task::sleep(10); 
     } 
 }

@@ -39,6 +39,7 @@ PIDControl move = PIDControl(1,0.5,0.3,10);
 static int alliance;
 static int fieldPosition;
 static int speedMode = 2;
+static bool waitForLeftRelease = false;
 
 //Methods
 void wait(double miliseconds)
@@ -349,48 +350,54 @@ void usercontrol(void)
           deploy();
           //rampDown();
         }
-        if(Controller.ButtonLeft.pressing() && speedMode==1)
+        if(Controller.ButtonLeft.pressing() && speedMode==1 && waitForLeftRelease)
         {
           speedMode = 3;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Maximum Overdrive 100");
+          Controller.rumble("-");
         }
-        else if(Controller.ButtonLeft.pressing() && speedMode==2)
+        else if(Controller.ButtonLeft.pressing() && speedMode==2 && waitForLeftRelease)
         {
           speedMode = 1;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Stack Mode 50");
+          Controller.rumble(".";
         }
-        else if(Controller.ButtonLeft.pressing() && speedMode==3)
+        else if(Controller.ButtonLeft.pressing() && speedMode==3 && waitForLeftRelease)
         {
           speedMode = 2;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Move Mode 75");
+          Controller.rumble("..");
         }
-        if(Controller.ButtonRight.pressing() && speedMode==1)
+        /*if(Controller.ButtonRight.pressing() && speedMode==1 && waitForRightRelease)
         {
           speedMode = 2;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Move Mode 75");
+          Controller.rumble("..");
         }
-        else if(Controller.ButtonRight.pressing() && speedMode==2)
+        else if(Controller.ButtonRight.pressing() && speedMode==2 && waitForRightRelease)
         {
           speedMode = 3;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Maximum Overdrive 100");
+          Controller.rumble("-");
         }
-        else if(Controller.ButtonRight.pressing() && speedMode==3)
+        else if(Controller.ButtonRight.pressing() && speedMode==3 && waitForRightRelease)
         {
           speedMode = 1;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Stack Mode 50");
-        }
+          Controller.rumble(".");
+        }*/
         if(speedMode==1)
         {
           LeftMotor.setMaxTorque(50, percentUnits::pct);

@@ -39,12 +39,21 @@ PIDControl move = PIDControl(1,0.5,0.3,10);
 static int alliance;
 static int fieldPosition;
 static int speedMode = 2;
-static bool waitForLeftRelease = false;
+static bool waitForLeftRelease = true;
 
 //Methods
 void wait(double miliseconds)
 {
   task::sleep(miliseconds);
+}
+bool waitForRelease()
+{
+  if(Controller.ButtonLeft.pressing() && waitForLeftRelease == true)
+  {
+    wait(500);
+    waitForLeftRelease = false;
+  }
+  return waitForLeftRelease;
 }
 void straight(double degrees, double speed, bool coast) //This method is used as a fast way to write in straights and the ability to coast is also given
 {
@@ -92,7 +101,7 @@ void towers(double degrees) //This method is used as a fast way to write in towe
   Tower1.stop(brakeType::hold);
   //Tower2.stop(brakeType::hold);
 }
-void rampDown() This method is used in the auton to place the tower
+void rampDown() //This method is used in the auton to place the tower
 {
   Lift.resetRotation();
   Lift.rotateTo(700, rotationUnits::deg, 50, velocityUnits::pct);
@@ -350,29 +359,32 @@ void usercontrol(void)
           deploy();
           //rampDown();
         }
-        if(Controller.ButtonLeft.pressing() && speedMode==1 && waitForLeftRelease)
+        if(Controller.ButtonLeft.pressing() && speedMode==1 && waitForLeftRelease == false)
         {
           speedMode = 3;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Maximum Overdrive 100");
           Controller.rumble("-");
+          waitForRelease();
         }
-        else if(Controller.ButtonLeft.pressing() && speedMode==2 && waitForLeftRelease)
+        else if(Controller.ButtonLeft.pressing() && speedMode==2 && waitForLeftRelease == false)
         {
           speedMode = 1;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Stack Mode 50");
-          Controller.rumble(".";
+          Controller.rumble(".");
+          waitForRelease();
         }
-        else if(Controller.ButtonLeft.pressing() && speedMode==3 && waitForLeftRelease)
+        else if(Controller.ButtonLeft.pressing() && speedMode==3 && waitForLeftRelease == false)
         {
           speedMode = 2;
           Controller.Screen.clearScreen();
           Controller.Screen.setCursor(1,1);
           Controller.Screen.print("Move Mode 75");
           Controller.rumble("..");
+          waitForRelease();
         }
         /*if(Controller.ButtonRight.pressing() && speedMode==1 && waitForRightRelease)
         {
@@ -429,9 +441,9 @@ void usercontrol(void)
 // Main will set up the competition functions and callbacks.
  int main() 
 {
+  pre_auton();
   Competition.autonomous(auton);        
   Competition.drivercontrol(usercontrol);
-  pre_auton();
   //Prevent main from exiting with an infinite loop.                        
   while(1) 
   {
